@@ -1,0 +1,378 @@
+---
+title: "Medicaid Expansion Effects on Labor"
+author: "Colin Wick"
+date: "4/21/2021"
+output: github_document
+---
+
+```{r,message=FALSE,echo=F,warning=F}
+knitr::opts_chunk$set(echo=F,warning = F,message = F,tidy = T,collapse = T,error = F)
+```
+
+```{r}
+knitr::opts_chunk$set(fig.align="center",fig.width = 8,fig.height = 4)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(rddensity)
+library(rdd)
+library(splines)
+library(stargazer)
+```
+```{r,cache=T}
+#cps <- read.csv("../Data/cps_transformed.csv")
+```
+
+
+
+```{r basic-income-distribution}
+#cps %>%
+#  filter(AGE < 55) %>%
+#  filter(INCTOT < 2e05 & INCTOT > 100) %>%
+#  filter(YEAR %in% c(2010:2015)) %>%
+#  select(INCTOT,EARNWT,HIMCAIDLY,YEAR) %>%
+#  mutate(bin = cut(x = INCTOT,breaks=seq(100,2055999,2055999/1000))) %>%
+#  ggplot() +
+#  geom_histogram(aes(x=INCTOT,weight=EARNWT,
+#                     y=..count../sum(..count..)),
+#                 na.rm = TRUE,bins=50)+
+#  facet_grid(YEAR~HIMCAIDLY,labeller = labeller(.cols = c("1"="No Medicaid","2"="Medicaid")))+
+#  geom_vline(xintercept =1.38*21720)
+```
+
+```{r bunching}
+#cps %>%
+#  filter(AGE > 25 & AGE < 50) %>%
+#  filter(UHRSWORKLY != 999) %>%
+#  filter(YEAR %in% c(2010:2015)) %>%
+#  filter(abs(mcaid_diff_fam) < 50000) %>%
+#  ggplot()+
+#  geom_histogram(aes(x=mcaid_diff_fam,
+#                     y=..count../sum(..count..),
+#                     weight=EARNWT,group=factor(mcaidstatus),
+#                     fill=factor(mcaidstatus)),
+#                 binwidth = 1000)+
+#  geom_vline(xintercept = 0)+
+#  facet_grid(YEAR~.)+scale_fill_discrete(name = "Medicaid Status")+
+#  ylab("Proportion")+xlab("Medicaid cutoff difference")+ggtitle("Income distribution Centered Around Medicaid Income Eligibility","Hourly workers aged 25-50")
+```
+
+```{r bunching-zoomed-in}
+#cps %>%
+#  filter(AGE > 25 & AGE < 60) %>%
+#  filter(UHRSWORKLY != 999) %>%
+#  filter(YEAR %in% c(2012:2015)) %>%
+#  filter(abs(mcaid_diff_fam) < 10000) %>%
+#  ggplot()+
+#  geom_histogram(aes(x=mcaid_diff_fam,
+#                     y=..count../sum(..count..),
+#                     weight=EARNWT,group=factor(mcaidstatus),
+#                     fill=factor(mcaidstatus)),
+#                 binwidth=200)+
+#  geom_vline(xintercept = 0)+
+#  facet_grid(YEAR~.)+scale_fill_discrete(name = "Medicaid Status")+
+#  ylab("Proportion")+xlab("Medicaid cutoff difference")+ggtitle("Income distribution Centered Around Medicaid Income Eligibility (Zoom)","Hourly workers aged 25-50") 
+```
+
+
+```{r}
+relevant_pop <- read.csv("../Data/relevant_pop.csv") %>%
+  mutate(SEX = SEX -1) 
+####
+#
+# For resconstructing from scratch
+#
+#####
+
+#relevant_pop <- cps %>%
+#  filter(AGE %in% c(26:60)) %>%
+#  filter(UHRSWORKLY != 999) %>%
+#  filter(mcaid_diff_fam < 10000 & mcaid_diff_fam > -10000) %>%
+#  filter(WORKLY == 2) %>%
+#  filter(DISABWRK == 1)
+```
+
+
+
+### Background & Intro
+
+The average health insurance premium cost for a single individual rose from \$3,000 to \$7,000 from 1999 to 2018. Over the same period, family coverage increased from \$6000 to \$20,000 per year [Health Affairs (2018)] (healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the Affordable Care Act included provisions for expansion of Medicaid for low-income individuals up to 138% of the federal poverty line. Though not a perfect program, qualifying for medicaid, in a sense, represents a transfer of value to an individual or family, respectively, at no cost. 
+
+After clearing the initial Supreme Court challenges, 27 states expanded Medicaid on the first year of the program's availability with another 10 expanding over the following 7 years. 4 states are currently in the process of implementing their expansions. 
+
+Given the stark cutoff of eligibility and relatively large income transfer that the program represents, bunching around the eligibility cutoff would be expected. This would be consistent with Saez (2010). However, in Miller (2019) they find little evidence of the kind of bunching present around the EITC trapezoid vertices. However, access to Medicaid is very different in terms of both public awareness and access. Even without bunching around the cutoff, there may still be some influence on labor decisions (or reporting) based on expanding eligibility.
+
+I confirm this analysis by post-hoc constructing medicaid eligibility using reported income and family size (based on marriage and number of children) and computing the difference by state-year FPL cutoffs going back to 2004. From here, all family incomes can be normalized around a 0 point (exactly eligible for Medicaid). Analysis from the Kaiser Family foundation found that removal of the asset test only resulted in a 3% increase in uptake.
+
+### Definition of Population of Interest
+
+This study specifically analyzes the population of families within $10,000 of medicaid coverage in either direction. This is the rough estimate of the "medicaid gap" which conceptually developed alongside the ACA's implementation but existed before as well. Though a relatively arbitrary cutoff, the \$10,000 cutoff is made where those at the high end would qualify for ACA Silver Plan Benchmarks and Medicaid coverage would not be worth reducing income. Similarly, for the low end, \$10,000 represents adding 2 full 8-hour days of work at \$12/hr. This cutoff represents utting down all Americans to a reasonable population represents those who are certainly affected by Medicaid's income cutoff out to the edges of that income-qualification decision.
+
+The population of interest is workers age 26-60. This population represents those most closely on the margin of the Medicaid cutoff. By the same logic other studies cut off health outcomes at the near-Medicare cohort, this study rather focuses on those for whom exogenous health effects may play less of a role in labor decisions. The lower bound of 26 is chosen due to the ACA's rule allowing children to stay on parent's health insurance policy until 26, which would distort estimates. I further limit the data to those who worked within the past year and did not report disability income to focus on marginal hours and wages rather than entering the labor force.
+
+```{r parallel-trends-avg-hrs}
+data.frame(colSums(is.na(relevant_pop))) %>% rename("count"=1) %>% arrange(desc(count))
+
+relevant_pop %>%
+  mutate(spline = case_when(first_treated == 1 & YEAR < 2014 ~ "pre:treated",
+                               first_treated == 0 & YEAR < 2014 ~ "pre:untreated",
+                               first_treated == 1 & YEAR >= 2014 ~ "post:treated",
+                               TRUE ~ "post:untreated")) %>%
+  group_by(spline,YEAR) %>%
+  summarise(avg_hrs = weighted.mean(UHRSWORKLY,w=ASECWT,na.rm=T),
+            sd_hrs = sd(UHRSWORKLY)/sqrt(n()),na.rm=T,
+            treat = first_treated) %>% unique() %>%
+  ggplot()+
+  geom_vline(xintercept = 2014)+
+  geom_smooth(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)),
+              se = F,method = "lm")+
+  geom_errorbar(aes(x=YEAR,y=avg_hrs,
+                    ymin=avg_hrs-sd_hrs,
+                    ymax=avg_hrs+sd_hrs,
+                    group=factor(spline),
+                    color=factor(treat)))+
+  geom_point(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)))+
+  ylab("Avg Hours Worked Per Week")+
+  scale_color_manual(aesthetics = "color",
+                     values=c("tomato3","steelblue3"),
+                     labels=c("Not Expanded","Expanded"),
+                     name="Expansion")+
+  ggtitle("Visual Parallel Trends - Average Hours Worked Per Week","Pre- and Post- Medicaid Expansion")
+```
+
+
+```{r parallel-trends-hrlywage}
+relevant_pop %>%
+  filter(hourly_wage < 500) %>%
+  mutate(spline = case_when(first_treated == 1 & YEAR < 2014 ~ "pre:treated",
+                               first_treated == 0 & YEAR < 2014 ~ "pre:untreated",
+                               first_treated == 1 & YEAR >= 2014 ~ "post:treated",
+                               TRUE ~ "post:untreated")) %>%
+  group_by(spline,YEAR) %>%
+  summarise(avg_hrs = weighted.mean(hourly_wage,w=ASECWT,na.rm=T),
+            sd_hrs = sd(hourly_wage)/sqrt(n()),na.rm=T,
+            treat = first_treated) %>% unique() %>%
+  ggplot()+
+  geom_vline(xintercept = 2014)+
+  geom_smooth(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)),
+              se = F,method = "lm")+
+  geom_errorbar(aes(x=YEAR,y=avg_hrs,
+                    ymin=avg_hrs-sd_hrs,
+                    ymax=avg_hrs+sd_hrs,
+                    group=factor(spline),
+                    color=factor(treat)))+
+  geom_point(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)))+
+  ylab("Avg Hourly Wage")+
+  scale_color_manual(aesthetics = "color",
+                     values=c("tomato3","steelblue3"),
+                     labels=c("Not Expanded","Expanded"),
+                     name="Expansion")+
+  ggtitle("Visual Parallel Trends - Average Hourly Wage","Pre- and Post- Medicaid Expansion")
+```
+
+```{r parallel-trends-totwage}
+relevant_pop %>% 
+  mutate(spline = case_when(first_treated == 1 & YEAR < 2014 ~ "pre:treated",
+                               first_treated == 0 & YEAR < 2014 ~ "pre:untreated",
+                               first_treated == 1 & YEAR >= 2014 ~ "post:treated",
+                               TRUE ~ "post:untreated")) %>%
+  group_by(spline,YEAR) %>%
+  summarise(avg_hrs = weighted.mean(INCWAGE,w=ASECWT,na.rm=T),
+            sd_hrs = sd(INCWAGE)/sqrt(n()),na.rm=T,
+            treat = first_treated) %>% unique() %>%
+  ggplot()+
+  geom_vline(xintercept = 2014)+
+  geom_smooth(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)),
+              se = F,method = "lm")+
+  geom_errorbar(aes(x=YEAR,y=avg_hrs,
+                    ymin=avg_hrs-sd_hrs,
+                    ymax=avg_hrs+sd_hrs,
+                    group=factor(spline),
+                    color=factor(treat)))+
+  geom_point(aes(x=YEAR,y=avg_hrs,group=factor(spline),color=factor(treat)))+
+  ylab("Avg Wage Income")+
+  scale_color_manual(aesthetics = "color",
+                     values=c("tomato3","steelblue3"),
+                     labels=c("Not Expanded","Expanded"),
+                     name="Expansion")+
+  ggtitle("Visual Parallel Trends - Income","Pre- and Post- Medicaid Expansion")
+```
+
+The above three charts visually represent a break in parallel trends for the variables of interest. The clearest break is in reported hours-per-week, which just visually shows a dramatic ~2hr increase relative to "parallel trend" in this sample. This represents a 5-10% increase in hours per week.
+
+The other two key measurements show a less dramatic visual difference. Hourly wage is far less marginally adjustable by workers, so the relatively stable trend between expansion and non-expansion states is expected. Wage income is reported as a separate variable but could also be constructed using CPS data. 
+
+For the purposes of this study, reported wage income is used, since it reduces respondent bias. Multiplying reported hours per week, weeks worked, and hourly wage would each be subject to a whole number bias respectively, while wage income is only subject once.
+
+The next step is to statistically define these parallel trends using an event-study methodology to ensure there are measurable differences in the treated population over this time period for our variable of interest (Medicaid eligibility).
+
+### Methodology & Establishing Causal Baseline
+
+The intention of the study is to focus on a more narrow question. For those near the Medicaid eligibility cutoff, did the "shock" of the ACA cause those around the cutoff to increase their economic output, as measured by weekly hours and total income from wages. 
+
+The study design is based, in part, off of Miller (2019) which similarly uses non-linked CPS data with an eligibility construction. Under a non-linked circumstance, the only means for analysis are in aggregate and by-cohort. The first step in building the difference-in-differences estimator is to establish parallel trends across the states, both in insurance rates and in labor output. By construction, this estimator is showing the probability (or level) for untreated 
+
+```{r miller-2019-insured}
+relevant_pop1 <- relevant_pop %>%
+  filter(REL_TIME %in% c(-6:-2,0:5))
+
+miller_formula <- formula(insured ~ ever_treated * factor(REL_TIME) + factor(YEAR) + factor(STATEFIP)+ black + SEX + in_school + d_MARST + hourly + NCHILD)
+miller_est <- lm(data=relevant_pop1,formula=miller_formula,weights = ASECWT)
+miller_est_summary <- data.frame(summary(miller_est)$coefficients)
+
+miller_est_summary %>%
+  select(Estimate,`Std..Error`) %>%
+  mutate(var = row.names(miller_est_summary)) %>%
+  filter(str_detect(var,pattern = "REL_TIME")) %>%
+  mutate(var = str_remove(var,regex("factor\\(TREATMENT\\)(0|1):")),
+         var = as.numeric(str_remove(var,regex("factor\\(REL_TIME\\)")))) %>%
+  bind_rows(c("Estimate" = 0,"Std..Error" = 0,"var" = -1)) %>%
+  rename(time = var,
+         se = Std..Error,
+         est = Estimate) %>%
+  ggplot()+
+  geom_errorbar(aes(x=time,ymin=est-se,ymax=est+se))+
+  geom_point(aes(x=time,y=est),size=3)+
+  #scale_x_discrete(name="Event Time",limits=c(-5:5))+
+  ylab("Coefficient")+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)+
+  ggtitle("Any Health Insurance","Linear Probability Model")
+```
+
+
+
+```{r miller-2019-priv-hi}
+miller_formula <- formula(PHINSUR ~ ever_treated * factor(REL_TIME) + factor(YEAR) + factor(STATEFIP)+ black + SEX + in_school + d_MARST + hourly + NCHILD)
+miller_est <- lm(data=relevant_pop1,formula=miller_formula,weights = ASECWT)
+miller_est_summary <- data.frame(summary(miller_est)$coefficients)
+
+miller_est_summary %>%
+  select(Estimate,`Std..Error`) %>%
+  mutate(var = row.names(miller_est_summary)) %>%
+  filter(str_detect(var,pattern = "REL_TIME")) %>%
+  mutate(var = str_remove(var,regex("factor\\(TREATMENT\\)(1|0):")),
+         var = as.numeric(str_remove(var,regex("factor\\(REL_TIME\\)")))) %>%
+  bind_rows(c("Estimate" = 0,"Std..Error" = 0,"var" = -1)) %>%
+  rename(time = var,
+         se = Std..Error,
+         est = Estimate) %>%
+  ggplot()+
+  geom_errorbar(aes(x=time,ymin=est-se,ymax=est+se))+
+  geom_point(aes(x=time,y=est),size=3)+
+  #scale_x_discrete(name="Event Time",limits=c(-5:5))+
+  ylab("Coefficient")+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)+
+  ggtitle("Private Health Insurance","Linear Probability Model")
+```
+
+This one is interesting, because we find an increase in private health insurance uptake. This is partially explained by the ACA subsidies which brought down the cost of private insurance for households and the upper side of this population's income distribution may qualify depending on the number of children in their family and state-level health insurance arrangement. 
+
+
+```{r miller-2019-mcaid-qual}
+miller_formula <- formula(mcaid_qual_indiv ~ ever_treated * factor(REL_TIME) + factor(YEAR) + factor(STATEFIP)+ black + SEX + in_school + d_MARST + hourly + NCHILD)
+miller_est <- lm(data=relevant_pop1,formula=miller_formula,weights=ASECWTH)
+miller_est_summary <- data.frame(summary(miller_est)$coefficients)
+
+miller_est_summary %>%
+  select(Estimate,`Std..Error`) %>%
+  mutate(var = row.names(miller_est_summary)) %>%
+  filter(str_detect(var,pattern = "REL_TIME")) %>%
+  mutate(var = str_remove(var,regex("factor\\(TREATMENT\\)(1|0):")),
+         var = as.numeric(str_remove(var,regex("factor\\(REL_TIME\\)")))) %>%
+  bind_rows(c("Estimate" = 0,"Std..Error" = 0,"var" = -1)) %>%
+  rename(time = var,
+         se = Std..Error,
+         est = Estimate) %>%
+  ggplot()+
+  geom_errorbar(aes(x=time,ymin=est-se,ymax=est+se))+
+  geom_point(aes(x=time,y=est),size=3)+
+#  scale_x_discrete(name="Event Time",limits=c(-5:5))+
+  ylab("Coefficient")+
+  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)+
+  ggtitle("Medicaid Qualification (Constructed Variable)","Linear Probability Model")
+```
+
+For the population of interest, we find that treatment had a dramatic effect on insurance rate. This is consistent with Miller 2019, both reaffirming the eligibility construction and showing that there are detectable state-level effects on insurance rates. The same calculation was done across the three analytic variables to the same effect (appended to the bottom of this study as Figures 1-3).  
+
+The first step in this analysis established that there may be a detectable treatment effect over time, but it is also necessary to establish this across the medicaid income threshold before and after treatment. The effects of increasing the medicaid threshold affect those above and below differently, so those just above may reduce hours while those below may increase hours when the Medicaid cutoff becomes a relevant choice in labor decisions. The next step in shaving off other potential causal factors is differences by demographics across the relevant threshold. Similar to the work in Hansen (2015) which shows that there is not a relevant discontinuity across the BAC threshold.
+
+```{r demo-discontinuity}
+relevant_pop %>%
+  mutate(inc_bin = cut(x = mcaid_diff_fam,breaks=seq(-10000,10000,20000/100),right = FALSE)) %>%
+  group_by(inc_bin) %>%
+  summarize(black = mean(black),
+            female = mean(SEX),
+            age = mean(AGE),
+            hours = mean(UHRSWORKLY),
+            wage = mean(INCWAGE),
+            FAMSIZE = mean(FAMSIZE),
+            inc_mid = max(mcaid_diff_fam)) %>%
+  pivot_longer(c(black,female,age,FAMSIZE,hours,wage)) %>%
+  #mutate(backnot = ifelse(bac_mid < .08,".08",ifelse(bac_mid >= .08 & bac_mid < .15,".15","over"))) %>%
+  mutate(inc_knot = ifelse(inc_mid > 0,1,0)) %>%
+  ggplot()+
+  geom_point(aes(inc_mid,value),alpha=.25)+
+  stat_smooth(aes(inc_mid,value,group=inc_knot),
+              method = lm,
+              se = TRUE,size=1)+
+  facet_wrap(~ name, scales = 'free', nrow = 2)+
+  ggtitle("Discontinuity on demographic & economic variables")+
+  ggthemes::theme_clean()
+```
+
+
+#### Placebo & Weighting
+The process of post-constructing medicaid eligibility also yields a simple placebo mechanism by which the outcomes of a difference in differences can be measured. The standard conception of the medicaid gap is \$10,000, meaning those outside of that threshold on either side will not face the same kind of imminent consideration on labor decisions, but will still have similar demographics and constraints as those just over the \$10000 threshold.
+
+Similarly, those closest to the Medicaid threshold could stand to gain the most from qualifying (or disqualifying) for Medicaid, which motivates the use of RDD-style triangular or quadratic weighting mechanism for those closest to that threshold to upweight the marginal decisions of those who are closest. This intuitively makes sense, since someone who merely needs to work one-fewer shifts per month, or one-fewer hours per week may opt to do so when that would qualify them for medicaid. Similarly, those who might have been bunching just-below the threshold have flexibility to work the corresponding marginal hour. On the contrary, few people (especially those for whom Medicaid is relevant) will not be able to simply "make" $5000 more dollars based on marginal labor decisions.
+
+These will be included as robustness checks later in the paper.
+
+# Model Specification
+
+The first model employed is a standard difference-in-difference model to establish any relationship with respect to expansion. In this sample, only looking at states which expanded immediately after the law went into effect. For this regression,  using the formula:
+
+$$H_{i,s,t} = \alpha + \gamma \cdot Treat + \beta \cdot Post + \delta \cdot Treat \cdot Post + \mu_i + \epsilon $$
+```{r}
+relevant_pop <- relevant_pop %>% mutate(post = ifelse(YEAR >= 2014,1,0))
+basic_did <- formula(UHRSWORKLY ~ ever_treated * post + factor(STATEFIP) + factor(YEAR) + black + SEX + in_school + d_MARST + hourly + NCHILD)
+lm(data=relevant_pop,formula=basic_did) %>% summary()
+```
+
+
+
+
+Second model employs the strategy highlighted in Black (2019) and Miller (2019), which accounts for lingering effects of treatment, setting "D" as a dummy representing ever receiving treatment and R representing a dummy for each relative event time. Using the formula:
+
+$$H_{i,t,s} = \alpha + \gamma*(D=1) + \delta (R_{t,s}=1) + \beta_s + \beta_t + \mu_{i} + \epsilon_{i,s,t}$$
+
+Where each individual ($i$) in state ($s$) is treated at time ($t$) with controls for each state and year effects, as well as a vector of demographic control variables.
+
+```{r basic-did}
+did_event <- formula(UHRSWORKLY ~ ever_treated + TREATMENT:factor(REL_TIME) + factor(STATEFIP) + factor(YEAR) + black + SEX + in_school + d_MARST + hourly + NCHILD)
+lm(data=relevant_pop1,formula = did_basic,weights = ASECWT) %>% summary()
+```
+
+NEEDS
+
+1. Establish theoretical relationship between eligibility and hours worked, wages, etc. Marginal hours of work, gap.
+
+2. Causal baseline, parallel trends 
+
+3. Basic difference in difference estimator
+
+4. Break out by cohorts
+
+5. Placebo test against those with incomes higher. Split on qual > 0 (assuming people won't drop down to qualify)
+
+NEED (other errata notes for myself)
+
+1. Motivate narrowing the dataset within $10000 of the mcaid cutoff
+
+2. Analysis around the running variable for an RDD design?
+
+3. For those to the left of the gap, did state-wide hours or income increase with mcaid expansion 
+
+4. To those to the right of the gap, did hrs/wages decrease with mcaid expansion
