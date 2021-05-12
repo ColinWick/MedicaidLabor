@@ -35,6 +35,8 @@ fips <- read.csv("UT/Spring 2021/Causal/MedicaidLabor/Data/StateFIPS.csv",col.na
 
 mcaid_1 <- read.csv("UT/Spring 2021/Causal/MedicaidLabor/Data/Medicaid_FPL_Parents_Time.csv")
 names(mcaid_1)[1] <- "State"
+
+states <- mcaid_1$State[(-1)]
 tmcaid_1 <- data.frame(t(mcaid_1)[-1,])
 names(tmcaid_1) <- unlist(t(mcaid_1)[1,])
 tmcaid_1$Date <- as.Date(row.names(tmcaid_1),format="X%m.%d.%Y")
@@ -44,7 +46,7 @@ tmcaid_1$Year[is.na(tmcaid_1$Year)] <- "2007"
 tmcaid_1 <- tmcaid_1 %>%
   select(-`United States`) %>%
   group_by(Year) %>%
-  pivot_longer(cols=states,names_to = "State",names_repair = "minimal") %>%
+  pivot_longer(cols = states,names_to = "State",names_repair = "minimal") %>%
   select(-Date) %>%
   rename("mcaid_fpl_cutoff_family"="value") %>%
   merge(fips,by.x = "State",by.y="STATE",all.x=TRUE) %>%
@@ -64,8 +66,6 @@ tmcaid_2 <- tmcaid_2 %>%
   rename("mcaid_fpl_cutoff_indiv"="value") %>%
   merge(fips,by.x = "State",by.y="STATE",all.x=TRUE) %>%
   select(-State)
-
-tmcaid_1$mcaid_fpl_cutoff_family[is.na(as.numeric(tmcaid_1$mcaid_fpl_cutoff_family))]
 
 # From the KFF, there are yearly medicaid cutoffs going back to 2002 for families and 2011 for individuals
 # Using this table, we can append each record with an individualized measure of the medicaid cutoff
@@ -134,8 +134,9 @@ cps <- cps %>%
          college = ifelse(EDUC > 80 & EDUC != 999,1,0),
          in_school = ifelse(SCHLCOLL == 5,1,0),
          hourly = ifelse(PAIDHOUR==2,1,0),
-         l_FTOTVAL = ifelse(FTOTVAL > 0,log(FTOTVAL),0),
-         l_INCTOT = ifelse(INCTOT > 0,log(INCTOT),0),
+         l_FTOTVAL = log(FTOTVAL+1),
+         l_INCTOT = log(INCTOT+1),
+         l_INCWAGE = log(INCWAGE+1),
          first_treated = ifelse(STATEFIP %in% exp$FIPS[exp$TREAT == "2014"],1,0),
          ever_treated = ifelse(STATEFIP %in% exp$FIPS,1,0),
          hourly_wage = INCWAGE / (UHRSWORKLY*WKSWORK1),
@@ -144,7 +145,8 @@ cps <- cps %>%
          mcaidstatus = case_when(DISABWRK == 2 & HIMCAIDLY == 2 ~ "MCAID&DISAB",
                                  DISABWRK == 1 & HIMCAIDLY == 2 ~ "MCAID&Non-DISAB",
                                  TRUE ~ "No MCAID"),
-         HIMCAIDLY_r = HIMCAIDLY - 1)
+         HIMCAIDLY_r = HIMCAIDLY - 1,
+         POST = ifelse(YEAR >= 2014,1,0))
 
 #cps %>%
 #  filter(hourly==1) %>%
