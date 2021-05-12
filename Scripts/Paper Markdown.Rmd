@@ -1,8 +1,8 @@
 ---
-title: "Medicaid Expansion Effects on Labor"
+title: "Medicaid Expansion Effects on Labor Decisions"
 author: "Colin Wick"
-date: "4/21/2021"
-output: github_document
+date: "5/12/2021"
+output: html_document
 ---
 
 ```{r,message=FALSE,echo=F,warning=F}
@@ -128,19 +128,35 @@ relevant_pop_placebos <- read.csv("../Data/relevant_pop_placebos.csv") %>%
 
 ### Background & Intro
 
-The average health insurance premium cost for a single individual rose from \$3,000 to \$7,000 from 1999 to 2018. Over the same period, family coverage increased from \$6000 to \$20,000 per year [Health Affairs (2018)] (healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the Affordable Care Act included provisions for expansion of Medicaid for low-income individuals up to 138% of the federal poverty line. Though not a perfect program, qualifying for medicaid, in a sense, represents a transfer of value to an individual or family, respectively, at no cost. 
+The average health insurance premium cost for a single individual rose from \$3,000 to \$7,000 from 1999 to 2018. Over the same period, family coverage increased from \$6000 to \$20,000 per year [Health Affairs (2018)](healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the Affordable Care Act included provisions for expansion of Medicaid for low-income individuals up to 138% of the federal poverty line. Though not a perfect program, qualifying for medicaid, in a sense, represents a transfer of value to an individual or family, respectively, at no cost. 
 
 After clearing the initial Supreme Court challenges, 27 states expanded Medicaid on the first year of the program's availability with another 10 expanding over the following 7 years. 4 states are currently in the process of implementing their expansions. 
 
 Given the stark cutoff of eligibility and relatively large income transfer that the program represents, bunching around the eligibility cutoff would be expected. This would be consistent with Saez (2010). However, in Miller (2019) they find little evidence of the kind of bunching present around the EITC trapezoid vertices. However, access to Medicaid is very different in terms of both public awareness and access. Even without bunching around the cutoff, there may still be some influence on labor decisions (or reporting) based on expanding eligibility.
 
-I confirm this analysis by post-hoc constructing medicaid eligibility using reported income and family size (based on marriage and number of children) and computing the difference by state-year FPL cutoffs going back to 2004. From here, all family incomes can be normalized around a 0 point (exactly eligible for Medicaid). Analysis from the Kaiser Family foundation found that removal of the asset test only resulted in a 3% increase in uptake.
+Analysis from the Kaiser Family foundation found that removal of the asset test only resulted in a 3% increase in program uptake, meaning eligibility and qualification mainly rest on family income. Using this assumption, we are able to reconstruct Medicaid eligibility using reported family income from the ASEC (the economic supplement to the Census's CPS). Income-based Medicaid eligibility is computed as a function of the Federal poverty line, which itself is a function of family size. Each of these variables is included in the ASEC (variables: NCHILD, FTOTVAL, MARST). Then using year-state Medicaid eligibility cutoffs as reported by the Kaiser Family Foundation, each observation of the ASEC can be coded with the exact difference between their family income and the state-year Medicaid threshold.
 
 #### Definition of Population of Interest
 
 This study specifically analyzes the population of families within $10,000 of medicaid coverage in either direction. This is the rough estimate of the "medicaid gap" which conceptually developed alongside the ACA's implementation but existed before as well. Though a relatively arbitrary cutoff, the \$10,000 cutoff is made where those at the high end would qualify for ACA Silver Plan Benchmarks and Medicaid coverage would not be worth reducing income. Similarly, for the low end, \$10,000 represents adding 2 full 8-hour days of work at \$12/hr. This cutoff represents utting down all Americans to a reasonable population represents those who are certainly affected by Medicaid's income cutoff out to the edges of that income-qualification decision.
 
 The population of interest is workers age 26-60. This population represents those most closely on the margin of the Medicaid cutoff. By the same logic other studies cut off health outcomes at the near-Medicare cohort, this study rather focuses on those for whom exogenous health effects may play less of a role in labor decisions. The lower bound of 26 is chosen due to the ACA's rule allowing children to stay on parent's health insurance policy until 26, which would distort estimates. I further limit the data to those who worked within the past year and did not report disability income to focus on marginal hours and wages rather than entering the labor force.
+
+#### Theoretical Basis
+
+Under the current system of Medicaid qualification, if a family is below their state's threshold, they qualify for the program. There are cases where disabled people and children have extra access to similar programs without means testing or with higher thresholds. However, the coverage offered for Medicaid/Medicare disability, CHIP, or similar programs often does not extend to parents or caretakers. 
+
+Healthcare in the United States is completely unaffordable, especially among the population where Medicaid coverage is a relevant question. As established before, insurance premiums cost on average \$6,000 per year for an individual. Under a utility-maximizing theory of households, access to healthcare is at least 1:1 substitutable with cash on hand, if not more. Therefore, if a worker is near the Medicaid threshold, they will adjust income (if possible) to get access to the program so long as the change in income is less than the in-kind utility of the program.
+
+Countless economic research demonstrates wage stickiness for both hourly and salaried employees. However, even for relatively powerless people (hourly workers at the bottom of the income distribution), they can still exert some control over the marginal number of hours they work per week. This may mean taking an extra shift or dropping a shift, for example. 
+
+Small shifts in weekly hours can amount to relatively large changes in yearly income, to the point where it may affect household medicaid eligibility. For example, dropping one 8-hour shift per week represents a \$4,000 change in yearly income for a 50-week \$10/hour worker. For those making between \$10,000 and \$20,000 (the medicaid-expansion relevant population), this could represent the difference between qualifying and not qualifying. It is also immediately clear that this difference would represent a net +\$2,000 household income increase taking the \$6,000 average cost of an individual plan.
+
+#### Visual Parallel Trends
+
+The first step in a difference-in-differences study is to establish parallel trends for the variables of interest. In this case, the main variable is average hours worked. The following three charts visually represent a break in parallel trends for the variables of interest. The clearest break is in reported hours-per-week, which just visually shows a dramatic ~2hr increase relative to "parallel trend" in this sample. This represents a 5-10% increase in hours per week (and therefore income) for those near the Medicaid threshold.
+
+The other two key measurements show a less dramatic visual difference. Hourly wage is far less marginally adjustable by workers, so the relatively stable trend between expansion and non-expansion states is expected. Wage income is reported as a separate variable but could also be constructed using CPS data. For the purposes of this study, reported wage income is used, since it reduces respondent bias. Multiplying reported hours per week, weeks worked, and hourly wage would each be subject to a whole number bias respectively, while wage income is only subject once.
 
 ```{r parallel-trends-avg-hrs}
 relevant_pop %>%
@@ -200,7 +216,7 @@ relevant_pop %>%
   ggtitle("Visual Parallel Trends - Average Hourly Wage","Pre- and Post- Medicaid Expansion")
 ```
 
-```{r parallel-trends-totwage}
+```{r parallel-trends-totwage, eval = FALSE,include=FALSE}
 relevant_pop %>% 
   mutate(spline = case_when(first_treated == 1 & YEAR < 2014 ~ "pre:treated",
                                first_treated == 0 & YEAR < 2014 ~ "pre:untreated",
@@ -228,17 +244,12 @@ relevant_pop %>%
   ggtitle("Visual Parallel Trends - Income","Pre- and Post- Medicaid Expansion")
 ```
 
-The above three charts visually represent a break in parallel trends for the variables of interest. The clearest break is in reported hours-per-week, which just visually shows a dramatic ~2hr increase relative to "parallel trend" in this sample. This represents a 5-10% increase in hours per week.
-
-The other two key measurements show a less dramatic visual difference. Hourly wage is far less marginally adjustable by workers, so the relatively stable trend between expansion and non-expansion states is expected. Wage income is reported as a separate variable but could also be constructed using CPS data. 
-
-For the purposes of this study, reported wage income is used, since it reduces respondent bias. Multiplying reported hours per week, weeks worked, and hourly wage would each be subject to a whole number bias respectively, while wage income is only subject once.
 
 The next step is to statistically define these parallel trends using an event-study methodology to ensure there are measurable differences in the treated population over this time period for our variable of interest (Medicaid eligibility).
 
 ## Methodology & Establishing Causal Baseline
 
-The intention of the study is to focus on a more narrow question. For those near the Medicaid eligibility cutoff, did the "shock" of the ACA cause those around the cutoff to increase their economic output, as measured by weekly hours and total income from wages. 
+The intention of the study is to focus on a more narrow question. For those near the Medicaid eligibility cutoff, did the "shock" of the ACA cause those around the cutoff to increase their economic output, as measured by weekly hours. 
 
 The study design is based, in part, off of Miller (2019) which similarly uses non-linked CPS data with an eligibility construction. Under a non-linked circumstance, the only means for analysis are in aggregate and by-cohort. The first step in building the difference-in-differences estimator is to establish parallel trends across the states, both in insurance rates and in labor output. By construction, this estimator is showing the probability (or level) for untreated 
 
@@ -322,7 +333,7 @@ miller_est_summary %>%
   ggtitle("Medicaid Qualification (Constructed Variable)","Linear Probability Model")
 ```
 
-For the population of interest, we find that treatment had a dramatic effect on insurance rate. This is consistent with Miller 2019, both reaffirming the eligibility construction and showing that there are detectable state-level effects on insurance rates. The same calculation was done across the three analytic variables to the same effect (appended to the bottom of this study as Figures 1-3).  
+For the population of interest, we find that treatment had a dramatic effect on insurance rate. This is consistent with Miller 2019, both reaffirming the eligibility construction and showing that there are detectable state-level effects on insurance rates. 
 
 The first step in this analysis established that there may be a detectable treatment effect over time, but it is also necessary to establish this across the medicaid income threshold before and after treatment. The effects of increasing the medicaid threshold affect those above and below differently, so those just above may reduce hours while those below may increase hours when the Medicaid cutoff becomes a relevant choice in labor decisions. The next step in shaving off other potential causal factors is differences by demographics across the relevant threshold. Similar to the work in Hansen (2015) which shows that there is not a relevant discontinuity across the BAC threshold.
 
@@ -356,7 +367,7 @@ rm(cps)
 #### Placebo & Weighting
 The process of post-constructing medicaid eligibility also yields a simple placebo mechanism by which the outcomes of a difference in differences can be measured. The standard conception of the medicaid gap is \$10,000, meaning those outside of that threshold on either side will not face the same kind of imminent consideration on labor decisions, but will still have similar demographics and constraints as those just over the \$10,000 threshold.
 
-Similarly, those closest to the Medicaid threshold could stand to gain the most from qualifying (or disqualifying) for Medicaid, which motivates the use of RDD-style triangular or quadratic weighting mechanism for those closest to that threshold to upweight the marginal decisions of those who are closest. This intuitively makes sense, since someone who merely needs to work one-fewer shifts per month, or one-fewer hours per week may opt to do so when that would qualify them for medicaid. Similarly, those who might have been bunching just-below the threshold have flexibility to work the corresponding marginal hour. On the contrary, few people (especially those for whom Medicaid is relevant) will not be able to simply "make" $5000 more dollars based on marginal labor decisions. 
+Similarly, those closest to the Medicaid threshold could stand to gain the most from qualifying (or disqualifying) for Medicaid, which motivates the use of RDD-style triangular or quadratic weighting mechanism for those closest to that threshold to upweight the marginal decisions of those who are closest. This intuitively makes sense, since someone who merely needs to work one-fewer shifts per month, or one-fewer hours per week may opt to do so when that would qualify them for medicaid. Similarly, those who might have been bunching just-below the threshold have flexibility to work the corresponding marginal hour. On the contrary, few people (especially those for whom Medicaid is relevant) will not be able to simply choose to make or forego \$10,000 based on marginal labor decisions. 
 
 ## Model Specification
 
@@ -422,7 +433,6 @@ quad_did <- formula(UHRSWORKLY ~ ever_treated * POST + factor(STATEFIP) + factor
 quad_wt_summary <- lm(data=rp_wt,formula=did_event,weights = quad_weight_ASEC)
 ```
 
-#### Placebo Regressions
 
 ```{r}
 rp_high <- relevant_pop_placebos %>%
@@ -439,6 +449,7 @@ placebo_low <- formula(UHRSWORKLY ~ ever_treated * POST * marginal_group + facto
 high_side_placebo <- lm(data=rp_low,formula = placebo_low,weights = ASECWT)
 ```
 
+#### Diff-in-Diff regressions
 
 ```{r}
 table1_keeporder = c("ever_treated:POST","TIME)0","TIME)1","TIME)2","TIME)3","TIME)4","TIME)5","Constant")
@@ -454,11 +465,13 @@ stargazer(basic_did_sum,event_study_sum,tri_wt_summary,quad_wt_summary,
           keep = table1_keeporder,covariate.labels = table1_keepnames)
 ```
 
-Regardless of weighting scheme, the same 2-3 hour difference in hours shows up across each regression. This in important in two ways. First, it validates the theoretical notion that those closer to the relevant constraint will be more sensitive to it. 
+Regardless of weighting scheme, the same 2-3 hour difference appears in each regression. This in important in two ways. First, it validates the theoretical notion that those closer to the relevant constraint will be more sensitive to it. 
 
 Secondly, the triangular weighting scheme's effectiveness both motivates and gives validity to a placebo test. Under a circumstance where those far from the cutoff are driving results, an effective placebo group would not be available. In this case, with the effect concentrated at the cutoff, those far from the cutoff can serve as a placebo.
 
 Table 2 shows two placebo tests, breaking out the group "just below" and "just above" the cutoff to further isolate the effects of expansion. Placebo groups were selected across the threshold and sufficiently far away.
+
+#### Placebo Regressions
 
 ```{r}
 relevant_pop_placebos %>%
@@ -472,7 +485,7 @@ relevant_pop_placebos %>%
   ggplot()+
   geom_point(aes(x=mcaid_diff_fam,y=UHRSWORKLY,color=TripDiff.group),alpha=.4)+
   scale_color_manual(breaks = c("just above","placebo high","placebo low","just below","not used"),
-                     values = c("steelblue2","tomato4","steelblue4","tomato2","white"))+
+                     values = c("steelblue3","tomato4","steelblue4","tomato3","white"))+
   geom_vline(xintercept = 0)+ggtitle("Placebo-Treatment pairs")+ylab("Weekly Hours")+xlab("Cutoff Difference")
   
 ```
@@ -485,7 +498,7 @@ names(low_side_placebo$coefficients)[c(1:4,80:82,85)] <- table2_keeporder
 stargazer(low_side_placebo,high_side_placebo,
           type = "text",
           single.row = T,
-          title = "Triple-Diff Results",
+          title = "Table 2: Triple-Diff Results",
           column.labels = c("Just Below","Just Above"),
           dep.var.labels = "Weekly Hours",
           keep = table2_keeporder,
@@ -505,27 +518,3 @@ Taking the placebo estimates from Table 2, the change in number of hours worked 
 Perhaps more starkly, those "just above" the threshold reduced income by \$2,400. This is consistent with a rational, utility-maximizing consumer theory since the average cost of a health insurance plan is \$6,000.
 
 In a broader context, this shows the effectiveness of a healthcare system not linked to an employment scheme. Also, keeping in mind the kinds of positions which offer \$12/hr tend not to be positions which offer generous benefits packages. Across this cohort, the only "work reducing" effect of this program is for those reducing labor output in order to get access to healthcare. The oppressive costs of healthcare in the United States have a massive distortionary effect on labor output, as illustrated in this relatively small example. Under a similar theory of healthcare access as a preferred outcome of a utility-maximizing household, there is reason to believe a similar effect is taking place among those in higher income cohorts as well.
-
-
-
-NEEDS
-
-1. Establish theoretical relationship between eligibility and hours worked, wages, etc. Marginal hours of work, gap.
-
-2. Causal baseline, parallel trends 
-
-3. Basic difference in difference estimator
-
-4. Break out by cohorts
-
-5. Placebo test against those with incomes higher. Split on qual > 0 (assuming people won't drop down to qualify)
-
-NEED (other errata notes for myself)
-
-1. Motivate narrowing the dataset within $10000 of the mcaid cutoff
-
-2. Analysis around the running variable for an RDD design?
-
-3. For those to the left of the gap, did state-wide hours or income increase with mcaid expansion 
-
-4. To those to the right of the gap, did hrs/wages decrease with mcaid expansion

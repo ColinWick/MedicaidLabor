@@ -1,19 +1,18 @@
 Medicaid Expansion Effects on Labor
 ================
 Colin Wick
-4/21/2021
+5/12/2021
 
 ### Background & Intro
 
 The average health insurance premium cost for a single individual rose
 from $3,000 to $7,000 from 1999 to 2018. Over the same period, family
-coverage increased from $6000 to $20,000 per year \[Health Affairs
-(2018)\] (healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010,
-the Affordable Care Act included provisions for expansion of Medicaid
-for low-income individuals up to 138% of the federal poverty line.
-Though not a perfect program, qualifying for medicaid, in a sense,
-represents a transfer of value to an individual or family, respectively,
-at no cost.
+coverage increased from $6000 to $20,000 per year [Health Affairs
+(2018)](healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the
+Affordable Care Act included provisions for expansion of Medicaid for
+low-income individuals up to 138% of the federal poverty line. Though
+not a perfect program, qualifying for medicaid, in a sense, represents a
+transfer of value to an individual or family, respectively, at no cost.
 
 After clearing the initial Supreme Court challenges, 27 states expanded
 Medicaid on the first year of the program’s availability with another 10
@@ -30,13 +29,18 @@ Even without bunching around the cutoff, there may still be some
 influence on labor decisions (or reporting) based on expanding
 eligibility.
 
-I confirm this analysis by post-hoc constructing medicaid eligibility
-using reported income and family size (based on marriage and number of
-children) and computing the difference by state-year FPL cutoffs going
-back to 2004. From here, all family incomes can be normalized around a 0
-point (exactly eligible for Medicaid). Analysis from the Kaiser Family
-foundation found that removal of the asset test only resulted in a 3%
-increase in uptake.
+Analysis from the Kaiser Family foundation found that removal of the
+asset test only resulted in a 3% increase in program uptake, meaning
+eligibility and qualification mainly rest on family income. Using this
+assumption, we are able to reconstruct Medicaid eligibility using
+reported family income from the ASEC (the economic supplement to the
+Census’s CPS). Income-based Medicaid eligibility is computed as a
+function of the Federal poverty line, which itself is a function of
+family size. Each of these variables is included in the ASEC (variables:
+NCHILD, FTOTVAL, MARST). Then using year-state Medicaid eligibility
+cutoffs as reported by the Kaiser Family Foundation, each observation of
+the ASEC can be coded with the exact difference between their family
+income and the state-year Medicaid threshold.
 
 #### Definition of Population of Interest
 
@@ -63,28 +67,65 @@ estimates. I further limit the data to those who worked within the past
 year and did not report disability income to focus on marginal hours and
 wages rather than entering the labor force.
 
-<img src="Paper-Markdown_files/figure-gfm/parallel-trends-avg-hrs-1.png" style="display: block; margin: auto;" />
+#### Theoretical Basis
 
-<img src="Paper-Markdown_files/figure-gfm/parallel-trends-hrlywage-1.png" style="display: block; margin: auto;" />
+Under the current system of Medicaid qualification, if a family is below
+their state’s threshold, they qualify for the program. There are cases
+where disabled people and children have extra access to similar programs
+without means testing or with higher thresholds. However, the coverage
+offered for Medicaid/Medicare disability, CHIP, or similar programs
+often does not extend to parents or caretakers.
 
-<img src="Paper-Markdown_files/figure-gfm/parallel-trends-totwage-1.png" style="display: block; margin: auto;" />
+Healthcare in the United States is completely unaffordable, especially
+among the population where Medicaid coverage is a relevant question. As
+established before, insurance premiums cost on average $6,000 per year
+for an individual. Under a utility-maximizing theory of households,
+access to healthcare is at least 1:1 substitutable with cash on hand, if
+not more. Therefore, if a worker is near the Medicaid threshold, they
+will adjust income (if possible) to get access to the program so long as
+the change in income is less than the in-kind utility of the program.
 
-The above three charts visually represent a break in parallel trends for
-the variables of interest. The clearest break is in reported
-hours-per-week, which just visually shows a dramatic \~2hr increase
-relative to “parallel trend” in this sample. This represents a 5-10%
-increase in hours per week.
+Countless economic research demonstrates wage stickiness for both hourly
+and salaried employees. However, even for relatively powerless people
+(hourly workers at the bottom of the income distribution), they can
+still exert some control over the marginal number of hours they work per
+week. This may mean taking an extra shift or dropping a shift, for
+example.
+
+Small shifts in weekly hours can amount to relatively large changes in
+yearly income, to the point where it may affect household medicaid
+eligibility. For example, dropping one 8-hour shift per week represents
+a $4,000 change in yearly income for a 50-week $10/hour worker. For
+those making between $10,000 and $20,000 (the medicaid-expansion
+relevant population), this could represent the difference between
+qualifying and not qualifying. It is also immediately clear that this
+difference would represent a net +$2,000 household income increase
+taking the $6,000 average cost of an individual plan.
+
+#### Visual Parallel Trends
+
+The first step in a difference-in-differences study is to establish
+parallel trends for the variables of interest. In this case, the main
+variable is average hours worked. The following three charts visually
+represent a break in parallel trends for the variables of interest. The
+clearest break is in reported hours-per-week, which just visually shows
+a dramatic \~2hr increase relative to “parallel trend” in this sample.
+This represents a 5-10% increase in hours per week (and therefore
+income) for those near the Medicaid threshold.
 
 The other two key measurements show a less dramatic visual difference.
 Hourly wage is far less marginally adjustable by workers, so the
 relatively stable trend between expansion and non-expansion states is
 expected. Wage income is reported as a separate variable but could also
-be constructed using CPS data.
+be constructed using CPS data. For the purposes of this study, reported
+wage income is used, since it reduces respondent bias. Multiplying
+reported hours per week, weeks worked, and hourly wage would each be
+subject to a whole number bias respectively, while wage income is only
+subject once.
 
-For the purposes of this study, reported wage income is used, since it
-reduces respondent bias. Multiplying reported hours per week, weeks
-worked, and hourly wage would each be subject to a whole number bias
-respectively, while wage income is only subject once.
+<img src="Paper-Markdown_files/figure-gfm/parallel-trends-avg-hrs-1.png" style="display: block; margin: auto;" />
+
+<img src="Paper-Markdown_files/figure-gfm/parallel-trends-hrlywage-1.png" style="display: block; margin: auto;" />
 
 The next step is to statistically define these parallel trends using an
 event-study methodology to ensure there are measurable differences in
@@ -96,7 +137,7 @@ interest (Medicaid eligibility).
 The intention of the study is to focus on a more narrow question. For
 those near the Medicaid eligibility cutoff, did the “shock” of the ACA
 cause those around the cutoff to increase their economic output, as
-measured by weekly hours and total income from wages.
+measured by weekly hours.
 
 The study design is based, in part, off of Miller (2019) which similarly
 uses non-linked CPS data with an eligibility construction. Under a
@@ -122,9 +163,7 @@ arrangement.
 For the population of interest, we find that treatment had a dramatic
 effect on insurance rate. This is consistent with Miller 2019, both
 reaffirming the eligibility construction and showing that there are
-detectable state-level effects on insurance rates. The same calculation
-was done across the three analytic variables to the same effect
-(appended to the bottom of this study as Figures 1-3).
+detectable state-level effects on insurance rates.
 
 The first step in this analysis established that there may be a
 detectable treatment effect over time, but it is also necessary to
@@ -159,8 +198,8 @@ one-fewer hours per week may opt to do so when that would qualify them
 for medicaid. Similarly, those who might have been bunching just-below
 the threshold have flexibility to work the corresponding marginal hour.
 On the contrary, few people (especially those for whom Medicaid is
-relevant) will not be able to simply “make” $5000 more dollars based on
-marginal labor decisions.
+relevant) will not be able to simply choose to make or forego $10,000
+based on marginal labor decisions.
 
 ## Model Specification
 
@@ -188,9 +227,9 @@ greatly weight the effects for those closest to the relevant margin,
 while the quadratic model will maintain the weights for those slightly
 further away from the threshold.
 
-$$W\_{tri} = 1-\\frac{abs(x)-10000}{10000} \* W\_{ASEC}$$
+$W\_{tri} = 1-\\frac{abs(x)-10000}{10000} \* W\_{ASEC}$
 
-$$W\_q = 1-\\frac{x^2}{10000^2} \* W\_{ASEC}$$
+$W\_q = 1-\\frac{x^2}{10000^2} \* W\_{ASEC}$
 
 The weighting scheme equals 1 for those directly on the threshold, and
 eventually equals 0 for those furthest. This method is commonly employed
@@ -234,10 +273,10 @@ qualify for medicaid.
 
 ## Results
 
-#### Placebo Regressions
+#### Diff-in-Diff regressions
 
     ## 
-    ## Difference-in-Differences Results
+    ## Table 1: Diff-in-Diff Results
     ## ======================================================================================
     ##                                         Dependent variable:                           
     ##               ------------------------------------------------------------------------
@@ -258,15 +297,32 @@ qualify for medicaid.
     ## ======================================================================================
     ## Note:                                                      *p<0.1; **p<0.05; ***p<0.01
 
-NOTE EFFECT IS LARGER AS WE MOVE CLOSER TO THE MARGIN WHICH VALIDATES A
-PLACEBO ANALYSIS
+Regardless of weighting scheme, the same 2-3 hour difference appears in
+each regression. This in important in two ways. First, it validates the
+theoretical notion that those closer to the relevant constraint will be
+more sensitive to it.
+
+Secondly, the triangular weighting scheme’s effectiveness both motivates
+and gives validity to a placebo test. Under a circumstance where those
+far from the cutoff are driving results, an effective placebo group
+would not be available. In this case, with the effect concentrated at
+the cutoff, those far from the cutoff can serve as a placebo.
+
+Table 2 shows two placebo tests, breaking out the group “just below” and
+“just above” the cutoff to further isolate the effects of expansion.
+Placebo groups were selected across the threshold and sufficiently far
+away.
+
+#### Placebo Regressions
+
+<img src="Paper-Markdown_files/figure-gfm/unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
 
     ## 
-    ## Triple Difference Results
+    ## Table 2: Triple-Diff Results
     ## =========================================================================
     ##                                      Dependent variable:                 
     ##                     -----------------------------------------------------
-    ##                                          UHRSWORKLY                      
+    ##                                         Weekly Hours                     
     ##                             Just Below                 Just Above        
     ##                                (1)                        (2)            
     ## -------------------------------------------------------------------------
@@ -287,28 +343,43 @@ PLACEBO ANALYSIS
     ## =========================================================================
     ## Note:                                         *p<0.1; **p<0.05; ***p<0.01
 
-NEEDS
+Table 2 shows a very different effect depending on the relationship to
+the medicaid cutoff. Those who are “just above” the cutoff reduce work
+hours by 3-5 hours per week while those “just below” increase hours by
+1.5-2.5 hours.
 
-1.  Establish theoretical relationship between eligibility and hours
-    worked, wages, etc. Marginal hours of work, gap.
+### Conclusion
 
-2.  Causal baseline, parallel trends
+Low-income people in the United States face an impossible set of
+circumstances for healthcare, especially those in or near the Medicaid
+Gap. The ACA’s expansion of Medicaid eligibility to those at 138% of the
+federal poverty line represented a massive shift in access to medicine
+for some of the poorest families in America.
 
-3.  Basic difference in difference estimator
+Previously it has been shown there is not a large amount of bunching
+along the Medicaid cutoff, partially due to the fluid nature of
+“potential” Medicaid coverage being enough for hospitals to treat
+patients. However, in the aggregate, there is evidence of people
+adjusting their behavior in response to the Medicaid cutoff.
 
-4.  Break out by cohorts
+Taking the placebo estimates from Table 2, the change in number of hours
+worked represents a substantial change in income over the year. By those
+estimates, at the average hourly wage for this cohort ($12), those “just
+below” the Medicaid cutoff increased yearly wages by $1,200 while
+maintaining pseudo-coverage on Medicaid.
 
-5.  Placebo test against those with incomes higher. Split on qual &gt; 0
-    (assuming people won’t drop down to qualify)
+Perhaps more starkly, those “just above” the threshold reduced income by
+$2,400. This is consistent with a rational, utility-maximizing consumer
+theory since the average cost of a health insurance plan is $6,000.
 
-NEED (other errata notes for myself)
-
-1.  Motivate narrowing the dataset within $10000 of the mcaid cutoff
-
-2.  Analysis around the running variable for an RDD design?
-
-3.  For those to the left of the gap, did state-wide hours or income
-    increase with mcaid expansion
-
-4.  To those to the right of the gap, did hrs/wages decrease with mcaid
-    expansion
+In a broader context, this shows the effectiveness of a healthcare
+system not linked to an employment scheme. Also, keeping in mind the
+kinds of positions which offer $12/hr tend not to be positions which
+offer generous benefits packages. Across this cohort, the only “work
+reducing” effect of this program is for those reducing labor output in
+order to get access to healthcare. The oppressive costs of healthcare in
+the United States have a massive distortionary effect on labor output,
+as illustrated in this relatively small example. Under a similar theory
+of healthcare access as a preferred outcome of a utility-maximizing
+household, there is reason to believe a similar effect is taking place
+among those in higher income cohorts as well.
