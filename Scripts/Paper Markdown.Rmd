@@ -128,7 +128,7 @@ relevant_pop_placebos <- read.csv("../Data/relevant_pop_placebos.csv") %>%
 
 ### Background & Intro
 
-The average health insurance premium cost for a single individual rose from \$3,000 to \$7,000 from 1999 to 2018. Over the same period, family coverage increased from \$6000 to \$20,000 per year [Health Affairs (2018)](healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the Affordable Care Act included provisions for expansion of Medicaid for low-income individuals up to 138% of the federal poverty line. Though not a perfect program, qualifying for medicaid, in a sense, represents a transfer of value to an individual or family, respectively, at no cost. 
+The average health insurance premium cost for a single individual rose from \$3,000 to \$7,000 from 1999 to 2018. Over the same period, family coverage increased from \$6000 to \$20,000 per year [Health Affairs (2018)](healthaffairs.org/doi/10.1377/hlthaff.2018.1001) . In 2010, the Affordable Care Act included provisions for expansion of Medicaid for low-income individuals up to 138% of the federal poverty line. Though not a perfect program, qualifying for Medicaid, in a sense, represents a transfer of value to an individual or family, respectively, at no cost. 
 
 After clearing the initial Supreme Court challenges, 27 states expanded Medicaid on the first year of the program's availability with another 10 expanding over the following 7 years. 4 states are currently in the process of implementing their expansions. 
 
@@ -138,7 +138,7 @@ Analysis from the Kaiser Family foundation found that removal of the asset test 
 
 #### Definition of Population of Interest
 
-This study specifically analyzes the population of families within $10,000 of medicaid coverage in either direction. This is the rough estimate of the "medicaid gap" which conceptually developed alongside the ACA's implementation but existed before as well. Though a relatively arbitrary cutoff, the \$10,000 cutoff is made where those at the high end would qualify for ACA Silver Plan Benchmarks and Medicaid coverage would not be worth reducing income. Similarly, for the low end, \$10,000 represents adding 2 full 8-hour days of work at \$12/hr. This cutoff represents utting down all Americans to a reasonable population represents those who are certainly affected by Medicaid's income cutoff out to the edges of that income-qualification decision.
+This study specifically analyzes the population of families within $10,000 of Medicaid coverage in either direction. This is the rough estimate of the "Medicaid gap" which conceptually developed alongside the ACA's implementation but existed before as well. Though a relatively arbitrary cutoff, the \$10,000 cutoff is made where those at the high end would qualify for ACA Silver Plan Benchmarks and Medicaid coverage would not be worth reducing income. Similarly, for the low end, \$10,000 represents adding 2 full 8-hour days of work at \$12/hr. This cutoff represents utting down all Americans to a reasonable population represents those who are certainly affected by Medicaid's income cutoff out to the edges of that income-qualification decision.
 
 The population of interest is workers age 26-60. This population represents those most closely on the margin of the Medicaid cutoff. By the same logic other studies cut off health outcomes at the near-Medicare cohort, this study rather focuses on those for whom exogenous health effects may play less of a role in labor decisions. The lower bound of 26 is chosen due to the ACA's rule allowing children to stay on parent's health insurance policy until 26, which would distort estimates. I further limit the data to those who worked within the past year and did not report disability income to focus on marginal hours and wages rather than entering the labor force.
 
@@ -150,7 +150,7 @@ Healthcare in the United States is completely unaffordable, especially among the
 
 Countless economic research demonstrates wage stickiness for both hourly and salaried employees. However, even for relatively powerless people (hourly workers at the bottom of the income distribution), they can still exert some control over the marginal number of hours they work per week. This may mean taking an extra shift or dropping a shift, for example. 
 
-Small shifts in weekly hours can amount to relatively large changes in yearly income, to the point where it may affect household medicaid eligibility. For example, dropping one 8-hour shift per week represents a \$4,000 change in yearly income for a 50-week \$10/hour worker. For those making between \$10,000 and \$20,000 (the medicaid-expansion relevant population), this could represent the difference between qualifying and not qualifying. It is also immediately clear that this difference would represent a net +\$2,000 household income increase taking the \$6,000 average cost of an individual plan.
+Small shifts in weekly hours can amount to relatively large changes in yearly income, to the point where it may affect household Medicaid eligibility. For example, dropping one 8-hour shift per week represents a \$4,000 change in yearly income for a 50-week \$10/hour worker. For those making between \$10,000 and \$20,000 (the Medicaid-expansion relevant population), this could represent the difference between qualifying and not qualifying. It is also immediately clear that this difference would represent a net +\$2,000 household income increase taking the \$6,000 average cost of an individual plan.
 
 #### Visual Parallel Trends
 
@@ -505,7 +505,7 @@ stargazer(low_side_placebo,high_side_placebo,
           align = T)
 ```
 
-Table 2 shows a very different effect depending on the relationship to the medicaid cutoff. Those who are "just above" the cutoff reduce work hours by 3-5 hours per week while those "just below" increase hours by 1.5-2.5 hours. 
+Table 2 shows a very different effect depending on the relationship to the Medicaid cutoff. Those who are "just above" the cutoff reduce work hours by 3-5 hours per week while those "just below" increase hours by 1.5-2.5 hours. 
 
 ### Conclusion
 
